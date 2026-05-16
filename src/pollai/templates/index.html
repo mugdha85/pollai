@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PollAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <span class="brand-icon">◉</span>
+        <span class="brand-name">PollAI</span>
+      </div>
+      <div class="nav-links">
+        <a href="#" class="nav-link active">Home</a>
+        <a href="#" class="nav-link">Trending</a>
+        <a href="#" class="nav-link">My Polls</a>
+        <a href="#" class="nav-link">Categories</a>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-create">+ Create Poll</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-inner">
+      <h1 class="hero-title">Discover what the<br><span class="hero-highlight">world thinks</span></h1>
+      <p class="hero-sub">Vote on polls across every topic. See real-time results from millions of people.</p>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-num">2.4M+</span>
+          <span class="stat-label">Votes cast</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">{{ total_polls }}</span>
+          <span class="stat-label">Active polls</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">{{ rows | length }}</span>
+          <span class="stat-label">Categories</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Poll rows -->
+  <div class="rows-container">
+    {% for row in rows %}
+    <section class="row-section">
+      <div class="row-header">
+        <div class="row-title-group">
+          <span class="row-accent" style="background: {{ row.color }}"></span>
+          <h2 class="row-title">{{ row.title }}</h2>
+        </div>
+        <div class="row-controls">
+          <button class="scroll-btn" onclick="scrollRow('track-{{ loop.index0 }}', -1)" aria-label="Scroll left">&#8249;</button>
+          <button class="scroll-btn" onclick="scrollRow('track-{{ loop.index0 }}', 1)" aria-label="Scroll right">&#8250;</button>
+        </div>
+      </div>
+      <div class="polls-track" id="track-{{ loop.index0 }}">
+        {% for poll in row.polls %}
+        <div class="poll-card" onclick="openPoll({{ poll.id }})" style="--accent: {{ row.color }}">
+          <div class="card-top-bar"></div>
+          <div class="card-body">
+            <span class="category-badge" style="color: {{ row.color }}">{{ poll.category }}</span>
+            <p class="poll-question">{{ poll.question }}</p>
+          </div>
+          <div class="card-footer">
+            <span class="vote-count">{{ poll.total_votes | fmt_votes }} votes</span>
+            <span class="vote-cta">Vote →</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+
+  <!-- Voting modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-question">
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">&#x2715;</button>
+      <span class="modal-category" id="modal-category"></span>
+      <h2 class="modal-question" id="modal-question"></h2>
+      <div class="modal-options" id="modal-options"></div>
+      <p class="modal-footer-text" id="modal-footer-text"></p>
+    </div>
+  </div>
+
+  <!-- Poll data for JS -->
+  <script>
+    const POLLS = {{ polls_by_id | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
