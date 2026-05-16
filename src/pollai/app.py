@@ -7,6 +7,7 @@ app = Flask(__name__)
 
 @app.template_filter("fmt_votes")
 def fmt_votes(n: int) -> str:
+    """Jinja2 filter that abbreviates a vote count for display (e.g. 1200 → '1.2K')."""
     if n >= 1_000_000:
         return f"{n / 1_000_000:.1f}M"
     if n >= 1_000:
@@ -16,6 +17,11 @@ def fmt_votes(n: int) -> str:
 
 @app.route("/")
 def index():
+    """Render the main page with all poll rows.
+
+    Builds a flat id→poll lookup dict so the template can embed the full
+    poll payload as JSON for the client-side voting modal.
+    """
     polls_by_id = {}
     for row in ROWS:
         for poll in row["polls"]:
@@ -26,6 +32,25 @@ def index():
 
 @app.route("/api/vote/<int:poll_id>/<int:option_idx>", methods=["POST"])
 def vote(poll_id: int, option_idx: int):
+    """Record a vote and return updated results.
+
+    Increments the chosen option's count in memory, then returns the full
+    results so the client can render animated progress bars without a page
+    reload.
+
+    Args:
+        poll_id:    ID of the poll being voted on.
+        option_idx: Zero-based index of the chosen option.
+
+    Returns:
+        JSON with keys:
+          - ``total``   (int)  — new total vote count for the poll.
+          - ``results`` (list) — each option as ``{text, votes, pct}``.
+
+    Raises:
+        404 if ``poll_id`` does not exist.
+        400 if ``option_idx`` is out of range.
+    """
     poll = get_poll(poll_id)
     if not poll:
         return jsonify({"error": "not found"}), 404
@@ -50,4 +75,5 @@ def vote(poll_id: int, option_idx: int):
 
 
 def main():
+    """Entry point for the `pollai` console script defined in pyproject.toml."""
     app.run(debug=True, port=5000)
